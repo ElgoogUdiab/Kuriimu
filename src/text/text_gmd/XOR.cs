@@ -17,8 +17,11 @@ namespace text_gmd
         public static Stream DeXOR(byte[] input)
         {
             var lastByte = input[input.Length - 1];
+            // Removed due to some bug
+            /*
             if (lastByte == 0)
                 return new MemoryStream(input);
+            */
 
             var t = input.Select((b, i) => (byte)(b ^ key1[1][i % key1[1].Length] ^ key2[1][i % key2[1].Length])).ToArray();
 

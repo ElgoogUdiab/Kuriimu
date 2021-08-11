@@ -83,39 +83,69 @@ namespace text_gmd
                     br.BaseStream.Position = 0x28 + (Header.NameSize + 1) + (Header.LabelCount * 0x20 + ((Header.LabelCount > 0) ? 0x100 * 0x8 : 0)) + Header.LabelSize;
                     var text = br.ReadBytes(Header.SectionSize);
 
-                    // Text deobfuscation
-                    var deXor = XOR.DeXOR(text);
+                    try {
+                        // Text deobfuscation
+                        var deXor = XOR.DeXOR(text);
 
-                    using (var brt = new BinaryReaderX(deXor))
-                    {
-                        var counter = 0;
-                        for (var i = 0; i < Header.SectionCount; i++)
-                        {
-                            var bk = brt.BaseStream.Position;
-                            var tmp = brt.ReadByte();
-                            while (tmp != 0)
-                                tmp = brt.ReadByte();
-                            var textSize = brt.BaseStream.Position - bk;
-                            brt.BaseStream.Position = bk;
+                        using (var brt = new BinaryReaderX(deXor)) {
+                            var counter = 0;
+                            for (var i = 0; i < Header.SectionCount; i++) {
+                                var bk = brt.BaseStream.Position;
+                                var tmp = brt.ReadByte();
+                                while (tmp != 0)
+                                    tmp = brt.ReadByte();
+                                var textSize = brt.BaseStream.Position - bk;
+                                brt.BaseStream.Position = bk;
 
-                            //Get Label if existent
-                            var label = "";
-                            if (LabelEntries.Find(l => l.SectionID == i) != null)
-                            {
-                                bk = br.BaseStream.Position;
-                                br.BaseStream.Position = LabelDataOffset + LabelEntries.Find(l => l.SectionID == i).LabelOffset;
-                                label = br.ReadCStringA();
-                                br.BaseStream.Position = bk;
+                                //Get Label if existent
+                                var label = "";
+                                if (LabelEntries.Find(l => l.SectionID == i) != null) {
+                                    bk = br.BaseStream.Position;
+                                    br.BaseStream.Position = LabelDataOffset + LabelEntries.Find(l => l.SectionID == i).LabelOffset;
+                                    label = br.ReadCStringA();
+                                    br.BaseStream.Position = bk;
+                                }
+
+                                GMDContent.Content.Add(new Label {
+                                    Name = label == "" ? "no_name_" + counter++.ToString("000") : label,
+                                    Text = brt.ReadString((int)textSize, Encoding.UTF8).Replace("\r\n", "\xa").Replace("\xa", "\r\n"),
+                                    TextID = i
+                                });
                             }
-
-                            GMDContent.Content.Add(new Label
-                            {
-                                Name = label == "" ? "no_name_" + counter++.ToString("000") : label,
-                                Text = brt.ReadString((int)textSize, Encoding.UTF8).Replace("\r\n", "\xa").Replace("\xa", "\r\n"),
-                                TextID = i
-                            });
                         }
                     }
+                    catch {
+                        // Text deobfuscation
+                        var deXor = new MemoryStream(text);
+
+                        using (var brt = new BinaryReaderX(deXor)) {
+                            var counter = 0;
+                            for (var i = 0; i < Header.SectionCount; i++) {
+                                var bk = brt.BaseStream.Position;
+                                var tmp = brt.ReadByte();
+                                while (tmp != 0)
+                                    tmp = brt.ReadByte();
+                                var textSize = brt.BaseStream.Position - bk;
+                                brt.BaseStream.Position = bk;
+
+                                //Get Label if existent
+                                var label = "";
+                                if (LabelEntries.Find(l => l.SectionID == i) != null) {
+                                    bk = br.BaseStream.Position;
+                                    br.BaseStream.Position = LabelDataOffset + LabelEntries.Find(l => l.SectionID == i).LabelOffset;
+                                    label = br.ReadCStringA();
+                                    br.BaseStream.Position = bk;
+                                }
+
+                                GMDContent.Content.Add(new Label {
+                                    Name = label == "" ? "no_name_" + counter++.ToString("000") : label,
+                                    Text = brt.ReadString((int)textSize, Encoding.UTF8).Replace("\r\n", "\xa").Replace("\xa", "\r\n"),
+                                    TextID = i
+                                });
+                            }
+                        }
+                    }
+                    
                 }
                 else
                 {
@@ -132,39 +162,79 @@ namespace text_gmd
                     br.BaseStream.Position = 0x28 + (Header.NameSize + 1) + (Header.LabelCount * 0x14 + ((Header.LabelCount > 0) ? 0x100 * 0x4 : 0)) + Header.LabelSize;
                     var text = br.ReadBytes(Header.SectionSize);
 
-                    // Text deobfuscation
-                    var deXor = XOR.DeXOR(text);
+                    /*
+                    var xor_reader = new StreamReader(deXor);
+                    var deXor_str = xor_reader.ReadToEnd();
+                    deXor.Position = 0;
+                    */
 
-                    using (var brt = new BinaryReaderX(deXor))
-                    {
-                        var counter = 0;
-                        for (var i = 0; i < Header.SectionCount; i++)
-                        {
-                            var bk = brt.BaseStream.Position;
-                            var tmp = brt.ReadByte();
-                            while (tmp != 0)
-                                tmp = brt.ReadByte();
-                            var textSize = brt.BaseStream.Position - bk;
-                            brt.BaseStream.Position = bk;
+                    try {
+                        // Text deobfuscation
+                        var deXor = XOR.DeXOR(text);
+                        using (var brt = new BinaryReaderX(deXor)) {
+                            var counter = 0;
+                            for (var i = 0; i < Header.SectionCount; i++) {
+                                var bk = brt.BaseStream.Position;
+                                var tmp = brt.ReadByte();
+                                while (tmp != 0)
+                                    tmp = brt.ReadByte();
+                                var textSize = brt.BaseStream.Position - bk;
+                                brt.BaseStream.Position = bk;
 
-                            //Get Label if existent
-                            var label = "";
-                            if (LabelEntries.Find(l => l.SectionID == i) != null)
-                            {
-                                bk = br.BaseStream.Position;
-                                br.BaseStream.Position = LabelDataOffset + LabelEntries.Find(l => l.SectionID == i).LabelOffset;
-                                label = br.ReadCStringA();
-                                br.BaseStream.Position = bk;
+                                //Get Label if existent
+                                var label = "";
+                                if (LabelEntries.Find(l => l.SectionID == i) != null) {
+                                    bk = br.BaseStream.Position;
+                                    br.BaseStream.Position = LabelDataOffset + LabelEntries.Find(l => l.SectionID == i).LabelOffset;
+                                    label = br.ReadCStringA();
+                                    br.BaseStream.Position = bk;
+                                }
+
+                                GMDContent.Content.Add(new Label {
+                                    Name = label == "" ? "no_name_" + counter++.ToString("000") : label,
+                                    Text = brt.ReadString((int)textSize, Encoding.UTF8).Replace("\r\n", "\xa").Replace("\xa", "\r\n"),
+                                    TextID = i
+                                });
                             }
-
-                            GMDContent.Content.Add(new Label
-                            {
-                                Name = label == "" ? "no_name_" + counter++.ToString("000") : label,
-                                Text = brt.ReadString((int)textSize, Encoding.UTF8).Replace("\r\n", "\xa").Replace("\xa", "\r\n"),
-                                TextID = i
-                            });
                         }
                     }
+                    catch (Exception ex) {
+                        try {
+                            // Fallback to no text deobfuscation
+                            // Since the no-obfs path of XOR is removed.
+                            var deXor = new MemoryStream(text);
+                            using (var brt = new BinaryReaderX(deXor)) {
+                                var counter = 0;
+                                for (var i = 0; i < Header.SectionCount; i++) {
+                                    var bk = brt.BaseStream.Position;
+                                    var tmp = brt.ReadByte();
+                                    while (tmp != 0)
+                                        tmp = brt.ReadByte();
+                                    var textSize = brt.BaseStream.Position - bk;
+                                    brt.BaseStream.Position = bk;
+
+                                    //Get Label if existent
+                                    var label = "";
+                                    if (LabelEntries.Find(l => l.SectionID == i) != null) {
+                                        bk = br.BaseStream.Position;
+                                        br.BaseStream.Position = LabelDataOffset + LabelEntries.Find(l => l.SectionID == i).LabelOffset;
+                                        label = br.ReadCStringA();
+                                        br.BaseStream.Position = bk;
+                                    }
+
+                                    GMDContent.Content.Add(new Label {
+                                        Name = label == "" ? "no_name_" + counter++.ToString("000") : label,
+                                        Text = brt.ReadString((int)textSize, Encoding.UTF8).Replace("\r\n", "\xa").Replace("\xa", "\r\n"),
+                                        TextID = i
+                                    });
+                                }
+                            }
+                        }
+                        catch {
+                            throw ex;
+                        }
+                    }
+                    
                 }
             }
         }
