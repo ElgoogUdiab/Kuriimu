@@ -115,6 +115,7 @@ namespace text_gmd
                         }
                     }
                     catch {
+                        GMDContent.Content.Clear();
                         // Text deobfuscation
                         var deXor = new MemoryStream(text);
 
@@ -199,6 +200,7 @@ namespace text_gmd
                         }
                     }
                     catch (Exception ex) {
+                        GMDContent.Content.Clear();
                         try {
                             // Fallback to no text deobfuscation
                             // Since the no-obfs path of XOR is removed.
